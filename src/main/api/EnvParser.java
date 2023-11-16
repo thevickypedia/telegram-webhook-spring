@@ -11,6 +11,8 @@ import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class EnvParser {
     static Logger logger = LoggerFactory.getLogger(Application.class);
@@ -31,7 +33,7 @@ public class EnvParser {
                 }
             }
             if (!pass) {
-                logger.error("'port' can only be {}", defaults.AllowedPorts.toMap().values());
+                logger.error("'port' can only be one of {}", defaults.AllowedPorts.toMap().values());
                 System.exit(1);
             }
         }
@@ -42,8 +44,30 @@ public class EnvParser {
         if (maxConnections == null || maxConnections.isBlank()) {
             return 40;
         } else {
-            return Integer.parseInt(maxConnections);
+            try {
+                int max_connections = Integer.parseInt(maxConnections);
+                if (max_connections > 100 || max_connections < 1) {
+                    throw new InvalidParameterException("'max_connections' should be between 1 and 100");
+                }
+                return max_connections;
+            } catch (NumberFormatException error) {
+                logger.error(error.getMessage());
+                throw new InvalidParameterException("'max_connections' should be an integer value");
+            }
         }
+    }
+
+    public static String parseWebhook(String webhook) {
+        if (webhook == null || webhook.isBlank()) {
+            throw new InvalidParameterException("'webhook' is required for this project");
+        } else {
+            Pattern pattern = Pattern.compile("https?://(www\\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_+.~#?&/=]*)\n");
+            Matcher matcher = pattern.matcher(webhook);
+            if (matcher.find()) {
+                return webhook;
+            }
+        }
+        throw new InvalidParameterException("webhook should be a valid HTTP url");
     }
 
     public static InetAddress parseIpAddress(String webhook_ip) {
@@ -51,7 +75,10 @@ public class EnvParser {
             return null;
         }
         try {
-            return InetAddress.getByName(webhook_ip);
+            InetAddress addr = InetAddress.getByName(webhook_ip);
+            System.out.println(addr);
+            System.exit(1);
+            return addr;
         } catch (UnknownHostException error) {
             logger.error(error.getMessage());
         }
@@ -92,7 +119,7 @@ public class EnvParser {
             updates.add(defaults.AllowedUpdates.get(0));
             return updates;
         }
-        for (String entry: asList(allowed_updates, ",")) {
+        for (String entry : asList(allowed_updates, ",")) {
             if (defaults.AllowedUpdates.contains(entry)) {
                 updates.add(entry);
             } else {

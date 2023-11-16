@@ -18,7 +18,8 @@ public class settings {
             .load();
     static String bot_token = dotenv.get("bot_token", dotenv.get("BOT_TOKEN"));
     static String endpoint = dotenv.get("endpoint", dotenv.get("ENDPOINT", "/telegram-webhook"));
-    static String webhook = dotenv.get("webhook", dotenv.get("WEBHOOK"));
+    static String webhook;
+    static String webhook_raw = dotenv.get("webhook", dotenv.get("WEBHOOK"));
     static String secret_token = dotenv.get("secret_token", dotenv.get("SECRET_TOKEN"));
     static Integer port;
     static String port_raw = dotenv.get("port", dotenv.get("PORT"));
@@ -48,22 +49,16 @@ public class settings {
                 throw new InvalidParameterException("secret_token should match the regex pattern ^[A-Za-z0-9_-]{1,256}$");
             }
         } else {
-            logger.warn("It is highly recommended to set a value for `secret_token`, " +
+            logger.warn("It is highly recommended to set a value for 'secret_token', " +
                     "as it will ensure the request comes from a webhook set by you.");
         }
         if (!endpoint.startsWith("/")) {
             throw new InvalidParameterException("endpoint should start with the URL path '/'");
         }
         drop_pending_updates = drop_pending_updates_raw != null;
-        if (webhook != null && !webhook.isBlank()) {
-            Pattern pattern = Pattern.compile("https?://(www\\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_+.~#?&/=]*)\n");
-            Matcher matcher = pattern.matcher(webhook);
-            if (!matcher.find()) {
-                throw new InvalidParameterException("webhook should be a HTTP url");
-            }
-        }
         port = EnvParser.parsePort(port_raw);
         max_connections = EnvParser.parseMaxConnections(max_connections_raw);
+        webhook = EnvParser.parseWebhook(webhook_raw);
         webhook_ip = EnvParser.parseIpAddress(webhook_ip_raw);
         certificate = EnvParser.parseCertificate(certificate_raw);
         allowed_updates = EnvParser.parseAllowedUpdates(allowed_updates_raw);
