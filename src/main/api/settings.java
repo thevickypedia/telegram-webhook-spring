@@ -10,16 +10,16 @@ public class settings {
             .directory("src")
             .filename(config.env_filename)
             .load();
-    static String bot_token;
-    static String secret_token;
-    static String webhook;
-    static String endpoint;
-    static Integer port;
-    static boolean drop_pending_updates;
-    static Integer max_connections;
-    static String webhook_ip;
-    static File certificate;
-    static List<String> allowed_updates;
+    public static String bot_token;
+    public static String secret_token;
+    public static String webhook;
+    public static String endpoint;
+    public static Integer port;
+    public static boolean drop_pending_updates;
+    public static Integer max_connections;
+    public static String webhook_ip;
+    public static File certificate;
+    public static List<String> allowed_updates;
 
     public static void __init__() {
         port = EnvParser.parsePort(dotenv.get("port", dotenv.get("PORT")));
