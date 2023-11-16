@@ -102,15 +102,16 @@ public class EnvParser {
         throw new InvalidParameterException("webhook should be a valid HTTP(s) url");
     }
 
-    public static InetAddress parseIpAddress(String webhook_ip) {
+    public static String parseIpAddress(String webhook_ip) {
         if (webhook_ip == null || webhook_ip.isBlank()) {
-            return null;
+            webhook_ip = settings.webhook;  // Extract IP from hostname is IP is not given explicitly
         }
         try {
-            InetAddress addr = InetAddress.getByName(webhook_ip);
-            System.out.println(addr);
-            System.exit(1);
-            return addr;
+            String ipaddress = InetAddress.getByName(webhook_ip).getHostAddress();
+            if (!webhook_ip.equals(ipaddress)) {
+                logger.info("Resolved IP: {}", ipaddress);
+            }
+            return ipaddress;
         } catch (UnknownHostException error) {
             logger.error(error.getMessage());
         }

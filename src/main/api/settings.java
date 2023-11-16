@@ -18,7 +18,7 @@ public class settings {
     static Integer port;
     static boolean drop_pending_updates;
     static Integer max_connections;
-    static InetAddress webhook_ip;
+    static String webhook_ip;
     static File certificate;
     static List<String> allowed_updates;
 
