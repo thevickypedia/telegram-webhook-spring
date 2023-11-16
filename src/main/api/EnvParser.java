@@ -4,8 +4,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+import java.io.IOException;
+import java.net.*;
 import java.nio.file.Paths;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
@@ -90,6 +90,22 @@ public class EnvParser {
         }
     }
 
+    private static boolean testWebhook(String webhook) {
+        try {
+            URL url = new URI(webhook).toURL();
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+            // tunneling apps return bad gateway if an app is not running in the said port
+            if (connection.getResponseCode() <= 400 || connection.getResponseCode() >= 500) {
+                return true;
+            }
+            logger.error("{}: {}", connection.getResponseCode(), connection.getResponseMessage());
+        } catch (URISyntaxException | IOException error) {
+            logger.error(error.getMessage());
+        }
+        return false;
+    }
+
     public static String parseWebhook(String webhook) {
         if (webhook == null || webhook.isBlank()) {
             throw new InvalidParameterException("'webhook' is required for this project");
@@ -97,7 +113,9 @@ public class EnvParser {
         Pattern pattern = Pattern.compile("https?://(www\\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_+.~#?&/=]*)");
         Matcher matcher = pattern.matcher(webhook);
         if (matcher.find()) {
-            return webhook;
+            if (testWebhook(webhook)) {
+                return webhook;
+            }
         }
         throw new InvalidParameterException("webhook should be a valid HTTP(s) url");
     }
