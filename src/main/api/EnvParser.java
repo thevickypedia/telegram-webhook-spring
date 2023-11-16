@@ -8,7 +8,9 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Paths;
 import java.security.InvalidParameterException;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 public class EnvParser {
     static Logger logger = LoggerFactory.getLogger(Application.class);
@@ -51,7 +53,7 @@ public class EnvParser {
         try {
             return InetAddress.getByName(webhook_ip);
         } catch (UnknownHostException error) {
-            logger.error(error.toString());
+            logger.error(error.getMessage());
         }
         return null;
     }
@@ -66,5 +68,22 @@ public class EnvParser {
         }
         throw new InvalidParameterException("Invalid certificate, isFile: " + cert.isFile() +
                 ", exists: " + cert.exists());
+    }
+
+    public static List<String> parseAllowedUpdates(String allowed_updates) {
+        if (allowed_updates == null || allowed_updates.isBlank()) {
+            return null;
+        }
+        List<String> updates = new ArrayList<>();
+        try {
+            for (String update : allowed_updates.split(",")) {
+                // todo: verify if update is in default allowed updates
+                updates.add(update.trim());
+            }
+            return updates;
+        } catch (NullPointerException error) {
+            logger.error(error.getMessage());
+        }
+        return null;
     }
 }

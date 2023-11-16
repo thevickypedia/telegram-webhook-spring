@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.net.InetAddress;
 import java.security.InvalidParameterException;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -29,6 +30,7 @@ public class settings {
     static String webhook_ip_raw = dotenv.get("webhook_ip", dotenv.get("WEBHOOK_IP"));
     static File certificate;
     static String certificate_raw = dotenv.get("certificate", dotenv.get("CERTIFICATE"));
+    static List<String> allowed_updates;
     static String allowed_updates_raw = dotenv.get("allowed_updates", dotenv.get("ALLOWED_UPDATES"));
     static Logger logger = LoggerFactory.getLogger(settings.class);
 
@@ -64,5 +66,6 @@ public class settings {
         max_connections = EnvParser.parseMaxConnections(max_connections_raw);
         webhook_ip = EnvParser.parseIpAddress(webhook_ip_raw);
         certificate = EnvParser.parseCertificate(certificate_raw);
+        allowed_updates = EnvParser.parseAllowedUpdates(allowed_updates_raw);
     }
 }
