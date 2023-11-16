@@ -70,20 +70,35 @@ public class EnvParser {
                 ", exists: " + cert.exists());
     }
 
-    public static List<String> parseAllowedUpdates(String allowed_updates) {
-        if (allowed_updates == null || allowed_updates.isBlank()) {
+    public static List<String> asList(String list, String separator) {
+        if (list == null || list.isBlank()) {
             return null;
         }
-        List<String> updates = new ArrayList<>();
+        List<String> listed = new ArrayList<>();
         try {
-            for (String update : allowed_updates.split(",")) {
-                // todo: verify if update is in default allowed updates
-                updates.add(update.trim());
+            for (String entry : list.split(separator)) {
+                listed.add(entry.trim());
             }
-            return updates;
+            return listed;
         } catch (NullPointerException error) {
             logger.error(error.getMessage());
         }
         return null;
+    }
+
+    public static List<String> parseAllowedUpdates(String allowed_updates) {
+        List<String> updates = new ArrayList<>();
+        if (allowed_updates == null) {
+            updates.add(defaults.AllowedUpdates.get(0));
+            return updates;
+        }
+        for (String entry: asList(allowed_updates, ",")) {
+            if (defaults.AllowedUpdates.contains(entry)) {
+                updates.add(entry);
+            } else {
+                throw new InvalidParameterException("'allowed_updates' should be one of " + defaults.AllowedUpdates);
+            }
+        }
+        return updates;
     }
 }
