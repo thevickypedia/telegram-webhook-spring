@@ -12,6 +12,9 @@ public class defaults {
             .put("https", "443")
             .put("openssl", "8443");
     static List<String> AllowedUpdates = new ArrayList<>();
+    static String endpoint = "/telegram-webhook";
+    static Integer max_connections = 40;
+
     static {  // Special block that gets executed before any other static method when loaded into memory
         AllowedUpdates.add("message");
         AllowedUpdates.add("edited_message");

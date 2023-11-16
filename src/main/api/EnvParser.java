@@ -17,6 +17,40 @@ import java.util.regex.Pattern;
 public class EnvParser {
     static Logger logger = LoggerFactory.getLogger(Application.class);
 
+    public static String parseBotToken(String bot_token) {
+        if (bot_token == null || bot_token.isBlank()) {
+            throw new InvalidParameterException("'bot_token' is required for startup.");
+        }
+        if (bot_token.length() > 120 | bot_token.length() < 8) {
+            throw new InvalidParameterException("character size for 'bot_token' should be between 8 and 120");
+        }
+        return bot_token;
+    }
+
+    public static String parseSecretToken(String secret_token) {
+        if (secret_token != null && !secret_token.isBlank()) {
+            Pattern pattern = Pattern.compile("^[A-Za-z0-9_-]{1,256}$");
+            Matcher matcher = pattern.matcher(secret_token);
+            if (!matcher.find()) {
+                throw new InvalidParameterException("secret_token should match the regex pattern ^[A-Za-z0-9_-]{1,256}$");
+            }
+        } else {
+            logger.warn("It is highly recommended to set a value for 'secret_token', " +
+                    "as it will ensure the request comes from a webhook set by you.");
+        }
+        return secret_token;
+    }
+
+    public static String parseEndpoint(String endpoint) {
+        if (endpoint == null || endpoint.isBlank()) {
+            return defaults.endpoint;
+        }
+        if (!endpoint.startsWith("/")) {
+            throw new InvalidParameterException("endpoint should start with the URL path '/'");
+        }
+        return endpoint;
+    }
+
     public static Integer parsePort(String port) {
         if (port == null) {
             port = defaults.AllowedPorts.getString("openssl");
@@ -42,32 +76,30 @@ public class EnvParser {
 
     public static Integer parseMaxConnections(String maxConnections) {
         if (maxConnections == null || maxConnections.isBlank()) {
-            return 40;
-        } else {
-            try {
-                int max_connections = Integer.parseInt(maxConnections);
-                if (max_connections > 100 || max_connections < 1) {
-                    throw new InvalidParameterException("'max_connections' should be between 1 and 100");
-                }
-                return max_connections;
-            } catch (NumberFormatException error) {
-                logger.error(error.getMessage());
-                throw new InvalidParameterException("'max_connections' should be an integer value");
+            return defaults.max_connections;
+        }
+        try {
+            int max_connections = Integer.parseInt(maxConnections);
+            if (max_connections > 100 || max_connections < 1) {
+                throw new InvalidParameterException("'max_connections' should be between 1 and 100");
             }
+            return max_connections;
+        } catch (NumberFormatException error) {
+            logger.error(error.getMessage());
+            throw new InvalidParameterException("'max_connections' should be an integer value");
         }
     }
 
     public static String parseWebhook(String webhook) {
         if (webhook == null || webhook.isBlank()) {
             throw new InvalidParameterException("'webhook' is required for this project");
-        } else {
-            Pattern pattern = Pattern.compile("https?://(www\\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_+.~#?&/=]*)\n");
-            Matcher matcher = pattern.matcher(webhook);
-            if (matcher.find()) {
-                return webhook;
-            }
         }
-        throw new InvalidParameterException("webhook should be a valid HTTP url");
+        Pattern pattern = Pattern.compile("https?://(www\\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_+.~#?&/=]*)");
+        Matcher matcher = pattern.matcher(webhook);
+        if (matcher.find()) {
+            return webhook;
+        }
+        throw new InvalidParameterException("webhook should be a valid HTTP(s) url");
     }
 
     public static InetAddress parseIpAddress(String webhook_ip) {
