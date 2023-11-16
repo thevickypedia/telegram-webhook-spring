@@ -3,7 +3,6 @@ package main.api;
 import io.github.cdimascio.dotenv.Dotenv;
 
 import java.io.File;
-import java.net.InetAddress;
 import java.util.List;
 
 public class settings {
