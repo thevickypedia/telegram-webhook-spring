@@ -1,5 +1,6 @@
 package main.api.app;
 
+import main.api.webhook.webhook;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +19,7 @@ public class main {
 
     @GetMapping("/getWebhook")  // todo: remove mapping
     public Object get_webhook() {
-        JSONObject webhook_response = Webhook.getWebhook();
+        JSONObject webhook_response = webhook.getWebhook();
         if (webhook_response == null || webhook_response.isEmpty()) {
             return ResponseEntity.notFound();
         }

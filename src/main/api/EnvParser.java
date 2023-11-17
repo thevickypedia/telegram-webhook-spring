@@ -15,7 +15,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class EnvParser {
-    static Logger logger = LoggerFactory.getLogger(Application.class);
+    static Logger logger = LoggerFactory.getLogger(EnvParser.class);
 
     public static String parseBotToken(String bot_token) {
         if (bot_token == null || bot_token.isBlank()) {
