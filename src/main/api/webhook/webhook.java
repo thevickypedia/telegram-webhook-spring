@@ -71,25 +71,23 @@ public class webhook {
         }
         connection.setDoOutput(true);
         try {
+            connection.setRequestProperty("Content-Type", "application/json");
+            byte[] out = payload.toString().getBytes(StandardCharsets.UTF_8);
+            OutputStream stream = connection.getOutputStream();
+            stream.write(out);
             if (settings.certificate != null) {
                 String boundary = Long.toHexString(System.currentTimeMillis());
                 connection.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
-                connection.getOutputStream().write(payload.toString().getBytes());
-                connection.getOutputStream().write(("--" + boundary + "\r\n").getBytes());
-                connection.getOutputStream().write(("Content-Disposition: form-data; name=\"certificate\"; filename=\"" + settings.certificate.getName() + "\"\r\n").getBytes());
-                connection.getOutputStream().write(("Content-Type: application/octet-stream\r\n\r\n").getBytes());
-                Files.copy(settings.certificate.toPath(), connection.getOutputStream());
-                connection.getOutputStream().write(("\r\n--" + boundary + "--\r\n").getBytes());
+                stream.write(("--" + boundary + "\r\n").getBytes());
+                stream.write(("Content-Disposition: form-data; name=\"certificate\"; filename=\"" + settings.certificate.getName() + "\"\r\n").getBytes());
+                stream.write(("Content-Type: application/octet-stream\r\n\r\n").getBytes());
+                Files.copy(settings.certificate.toPath(), stream);
+                stream.write(("\r\n--" + boundary + "--\r\n").getBytes());
                 int responseCode = connection.getResponseCode();
                 if (responseCode == HttpURLConnection.HTTP_OK) {
                     return getResponseJSON(connection);
                 }
             } else {
-                connection.setRequestProperty("Content-Type", "application/json");
-                // todo: validate the following payload addition with certificates
-                byte[] out = payload.toString().getBytes(StandardCharsets.UTF_8);
-                OutputStream stream = connection.getOutputStream();
-                stream.write(out);
                 int responseCode = connection.getResponseCode();
                 if (responseCode == HttpURLConnection.HTTP_OK) {
                     logger.info("Webhook has been set successfully!");

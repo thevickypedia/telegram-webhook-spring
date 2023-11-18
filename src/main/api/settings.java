@@ -1,6 +1,7 @@
 package main.api;
 
 import io.github.cdimascio.dotenv.Dotenv;
+import main.api.app.exceptions;
 
 import java.io.File;
 import java.util.List;
@@ -21,7 +22,7 @@ public class settings {
     public static File certificate;
     public static List<String> allowed_updates;
 
-    public static void __init__() {
+    public static void __init__() throws exceptions.StartupError {
         port = EnvParser.parsePort(dotenv.get("port", dotenv.get("PORT")));
         webhook = EnvParser.parseWebhook(dotenv.get("webhook", dotenv.get("WEBHOOK")));
         endpoint = EnvParser.parseEndpoint(dotenv.get("endpoint", dotenv.get("ENDPOINT")));
@@ -32,5 +33,6 @@ public class settings {
         allowed_updates = EnvParser.parseAllowedUpdates(dotenv.get("allowed_updates", dotenv.get("ALLOWED_UPDATES")));
         max_connections = EnvParser.parseMaxConnections(dotenv.get("max_connections", dotenv.get("MAX_CONNECTIONS")));
         drop_pending_updates = dotenv.get("drop_pending_updates", dotenv.get("DROP_PENDING_UPDATES")) != null;
+        EnvParser.testWebhook(webhook);
     }
 }

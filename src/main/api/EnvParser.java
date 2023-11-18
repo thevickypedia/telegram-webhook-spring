@@ -1,13 +1,16 @@
 package main.api;
 
+import main.api.app.exceptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.*;
 import java.nio.file.Paths;
 import java.security.InvalidParameterException;
+import java.security.cert.CertificateParsingException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -90,34 +93,64 @@ public class EnvParser {
         }
     }
 
-    private static boolean testWebhook(String webhook) {
+    //todo: Still unstable
+    private static void useSelfSignedCertificate() {
+        try {
+            TrustManager[] trustAllCerts = new TrustManager[]{
+                    new X509TrustManager() {
+                        public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                            logger.info("Accepted issuers");
+                            return null;
+                        }
+
+                        public void checkClientTrusted(java.security.cert.X509Certificate[] certs, String authType)
+                                throws CertificateParsingException {
+                            logger.info("Client certificate accepted: " + certs[0].getSubjectAlternativeNames());
+                        }
+
+                        public void checkServerTrusted(java.security.cert.X509Certificate[] certs, String authType)
+                                throws CertificateParsingException {
+                            logger.info("Server certificate accepted: " + certs[0].getSubjectAlternativeNames());
+                        }
+                    }
+            };
+            SSLContext sslContext = SSLContext.getInstance("SSL");
+            sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
+            HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
+            HttpsURLConnection.setDefaultHostnameVerifier((hostname, session) -> true);
+        } catch (Exception error) {
+            logger.error(error.getMessage());
+        }
+    }
+
+    public static void testWebhook(String webhook) throws exceptions.StartupError {
         try {
             URL url = new URI(webhook).toURL();
+            if (settings.certificate != null) {
+                useSelfSignedCertificate();
+            }
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
             // tunneling apps return bad gateway if an app is not running in the said port
             if (connection.getResponseCode() <= 400 || connection.getResponseCode() >= 500) {
-                return true;
+                return;
             }
-            logger.error("{}: {}", connection.getResponseCode(), connection.getResponseMessage());
+            String error = connection.getResponseCode() + ": " + connection.getResponseMessage();
+            logger.error(error);
+            throw new exceptions.StartupError(error);
         } catch (URISyntaxException | IOException error) {
-            logger.error(error.getMessage());
+            throw new exceptions.StartupError(error.getMessage());
         }
-        return false;
     }
 
     public static String parseWebhook(String webhook) {
         if (webhook == null || webhook.isBlank()) {
             throw new InvalidParameterException("'webhook' is required for this project");
         }
-        Pattern pattern = Pattern.compile("https?://(www\\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_+.~#?&/=]*)");
-        Matcher matcher = pattern.matcher(webhook);
-        if (matcher.find()) {
-            if (testWebhook(webhook)) {
-                return webhook;
-            }
+        if (!webhook.startsWith("http")) {
+            throw new InvalidParameterException("webhook should be a valid HTTP(s) url");
         }
-        throw new InvalidParameterException("webhook should be a valid HTTP(s) url");
+        return webhook;
     }
 
     public static String parseIpAddress(String webhook_ip) {
