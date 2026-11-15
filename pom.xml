@@ -58,7 +58,7 @@
                     <artifactId>commons-logging</artifactId>
                 </exclusion>
             </exclusions>
-            <version>20230618</version>
+            <version>20260719</version>
         </dependency>
     </dependencies>
 </project>
